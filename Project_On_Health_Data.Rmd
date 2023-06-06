@@ -1,0 +1,151 @@
+---
+Author: "Aniket Chakraborty"
+Last Updated: "06/06/2023" or "6th June 2023" 
+title: "R Notebook on Health Data"
+output: html_notebook
+---
+
+```{r Installing & loading packages}
+# Installing Required Packages
+install.packages("tidyverse")
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r Reading csv file}
+# Reading the data set and naming it as health_df
+health_df <- read.csv("Health_Data.csv")
+```
+
+
+```{r Previewing the data frame}
+# Previewing the data frame using View() function
+View(health_df)
+```
+
+
+```{r Observing the structure}
+# Checking the structure of the data frame and the type of variables
+str(health_df)
+```
+
+```{r Getting Summary Statistics}
+# Checking summary statistics of the data frame
+summary(health_df)
+```
+
+```{r Getting the columns names}
+# Getting column names of the data frame
+colnames(health_df)
+```
+
+```{r Getting Row and column numbers}
+# Obtaining the row and column numbers of the data frame
+nrow(health_df)
+ncol(health_df)
+```
+
+
+```{r Using mutate() function to add another variable}
+# Creating one new column called Doc_received by subtracting Hospital bill from Bill received
+# Saving it in another data frame
+health_01_df <- health_df %>% mutate(Doc_received=Bill_amount-Hospital_received)
+head(health_01_df)
+
+```
+
+```{r Using mutate() function with ifelse condition}
+# Creating a feedback column using if-else condition
+# Storing it in another variable
+health_02_df <- health_01_df %>% mutate(Feedback=ifelse(Bill_amount > mean(Bill_amount),'Bad','Good'))
+head(health_02_df)
+```
+
+```{r Counting the Number of feedbacks}
+# Getting the sum of total Good and Bad feedback
+health_02_df %>% group_by(Feedback) %>% count()
+```
+
+```{r Using select() function}
+# Selecting Age,Disease and Duration of disease column from the data frame
+health_02_df %>% select(Age,Disease,Duration._of_disease)
+```
+
+```{r Using rename() function}
+# Renaming a column into a new column
+# Saving and storing the data in a new data frame
+health_final_df <- health_02_df %>% rename(Duration_of_disease = Duration._of_disease)
+head(health_final_df)
+```
+
+```{r Checking the column names of the latest data frame}
+# Finnaly getting the colnames of the data frame
+colnames(health_final_df)
+```
+
+```{r Using filter() function on Age and Duration_Of_Diseases}
+# Filtering the latest data frame on Age< 30 and duraion of disease is less than 2 years
+health_final_df %>% filter(Age < 30 & Duration_of_disease < 2)
+```
+
+```{r Using filter() function on Disease and Gender}
+# Filtering the data frame on Diabetics disease and female gender
+health_final_df %>% filter(Disease == 'Diabetics' & Gender == 'Female')
+```
+
+```{r Using groiup_by and summarize() function}
+# Finding some Mathematical values for Bill_amount using group_by() and summarize()
+health_final_df %>% group_by(Gender) %>% summarize(avg_bill=mean(Bill_amount),min_bill=min(Bill_amount),max_bill=max(Bill_amount))
+```
+
+```{r Statistics on Hospital Bill}
+# Finding some Mathematical values for Hospital_received using group_by() and summarize()
+health_final_df %>% group_by(Gender) %>% summarize(avg_hospital=mean(Hospital_received),min_hospital=min(Hospital_received),max_hospital=max(Hospital_received))
+```
+
+```{r Statistics on Doctor Receice}
+# Finding some Mathematical values for Doc_received using group_by() and summarize()
+health_final_df%>%group_by(Gender)%>%summarize(avg_doc=mean(Doc_received),min_doc=min(Doc_received),max_doc=max(Doc_received))
+```
+
+
+```{r Plotting dot plot for each gender}
+# Plotting Age vs Bill_amount for Good and Bad feedback
+p1=ggplot(data= health_final_df)+ geom_point(mapping=aes(x= Age,y=Bill_amount,color= Gender),size=5)+labs(title="Distribution of Bill with respect to Age",x="Age",y="BillAmount")+facet_wrap(~Feedback)
+p1
+```
+
+```{r Making a Data frame having age<30 and disease Diabetics}
+# Selecting Age and Disease where Age <30 and disease is diabetics
+health_sp <- health_final_df %>% filter(Age<30 & Disease =='Diabetics') %>% select(Age,Disease)
+View(health_sp)
+```
+
+
+```{r Plotting Diabetics With Age_Range}
+# Constructing an age range and plotting a bar graph
+age_range <- cut(health_sp$Age, breaks=c(0, 6, 12, 20, 25, 30))
+age_range
+p2=ggplot(data=health_sp)+geom_bar(mapping=aes(x=age_range,fill=Disease))+ labs(x="Age Range", y="No. of People with Disease")
+p2
+```
+
+```{r Getting total number of different diseases}
+# Counting the number of each type of diseae that are in the population
+health_final_df %>% group_by(Disease) %>% count()
+```
+
+
+```{r Pie chart of disease contribution in data}
+# Plotting a pie chart to know the contribution of each disease in the population
+values <- c(39,26,35)
+labels <- c('Diabetics','Pressure','Thyroid')
+radius <- 1
+colors <- c('red','blue','gold')
+main <- 'Distribution of Disease in the popiulation'
+percentages <- round(values/sum(values)*100,2)
+p3=pie(values,labels,radius=radius,main=main,col=colors)
+p3
+```
+
